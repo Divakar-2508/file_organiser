@@ -1,5 +1,6 @@
 #![allow(non_snake_case)]
-use std::{env, path::Path};
+use std::env;
+use std::fs;
 
 fn main() {
     let curr_dirr = env::current_dir().expect("Can't read directory");
@@ -16,6 +17,14 @@ fn main() {
         });
     
     for file in files{
-        println!("{:?}", file);
+        let file_extension = file.extension().unwrap().to_str().unwrap();
+        let folder_name = curr_dirr.join(file_extension);
+
+        if !folder_name.exists(){
+            std::fs::create_dir(&folder_name).expect("Can't create folder");
+        } 
+
+        let new_path = folder_name.join(file.file_name().unwrap());
+        fs::rename(&file, &new_path).expect("Can't rename file");
     }
 }
