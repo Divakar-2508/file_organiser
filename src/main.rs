@@ -12,12 +12,28 @@ fn main() {
     if enb.len() > 1 {
         if Path::new(&enb[1]).is_dir() {
             dir = Path::new(&enb[1]);
+        } else if enb[1] == "."{
+            dir = &curr_dirr; 
         } else {
             println!("Invalid Path");
+            println!("Usage: file_organizer [path] (. for current directory)");
             return;
         }
     } else {
-        dir = &curr_dirr;
+
+        print!("Do you want to Organise the current Directory? (y/n): ");
+        std::io::stdout().flush().unwrap();
+
+        let mut input = String::new();
+        std::io::stdin().read_line(&mut input).expect("Can't read input");
+
+        if input.trim() == "y" || input.trim() == "Y" {
+            dir = &curr_dirr;
+        } else {
+            println!("Mission Aborted!! :)");
+            println!("Usage: file_organizer [path] (. for current directory)");
+            return;
+        }
     }
 
     let files = dir
@@ -45,6 +61,7 @@ fn main() {
             fs::rename(&file, &new_path).expect("Can't rename file");
         }
     }
+
     println!("Files Organized!!");
     std::io::stdout().flush().unwrap();
 }
