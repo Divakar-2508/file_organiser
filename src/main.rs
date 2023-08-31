@@ -3,7 +3,13 @@ use std::path::Path;
 use std::{ env, fs };
 use std::io::Write;
 
+
+//Usage: file_organizer [path] (. for current directory)
+//Example: file_organizer .
+//Example: file_organizer /home/user/Downloads
 fn main() {
+
+
     let enb = env::args().collect::<Vec<String>>();
     let curr_dirr = env::current_dir().expect("Can't read directory");
 
@@ -13,7 +19,7 @@ fn main() {
         if Path::new(&enb[1]).is_dir() {
             dir = Path::new(&enb[1]);
         } else if enb[1] == "."{
-            dir = &curr_dirr; 
+            dir = &curr_dirr;
         } else {
             println!("Invalid Path");
             println!("Usage: file_organizer [path] (. for current directory)");
@@ -61,7 +67,7 @@ fn main() {
             fs::rename(&file, &new_path).expect("Can't rename file");
         }
     }
-
+    
     println!("Files Organized!!");
     std::io::stdout().flush().unwrap();
 }
