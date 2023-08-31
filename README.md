@@ -6,7 +6,7 @@ Read the given directory and sort it with the folders of respective extension
 
 Usage:
 
-File-Organiser [directory]
+File-Organiser [directory] (or)
 File-Organiser . (Current Directory)
 
 If nothing is specified,
