@@ -1,80 +1,65 @@
 #![allow(non_snake_case)]
-use std::path::Path;
-use std::{ env, fs };
-use std::io::Write;
+use std::io::{self};
+use std::path::PathBuf;
+use std::{env, fs};
 
+fn organize_directory(dir: PathBuf) -> io::Result<()> {
+    for entry in dir.read_dir()? {
+        let entry = entry?.path();
+        let metadata = entry.metadata()?;
 
-//Usage: file_organizer [path] (. for current directory)
-//Example: file_organizer .
-//Example: file_organizer /home/user/Downloads
+        if metadata.is_dir() {
+            continue;
+        }
+
+        let ext = entry
+            .extension()
+            .map(|e| e.to_string_lossy().to_string())
+            .unwrap_or("misc".to_string());
+
+        let ext_folder = dir.join(&ext);
+        if !ext_folder.exists() {
+            fs::create_dir(&ext_folder)?;
+        }
+
+        let new_path = ext_folder.join(entry.file_name().unwrap());
+
+        fs::rename(entry.as_path(), new_path)?;
+    }
+
+    Ok(())
+}
+
+// fog .
 fn main() {
+    let args: Vec<String> = env::args().skip(1).collect();
 
-    //Getting the arguments from the command line.
-    let enb = env::args().collect::<Vec<String>>();
-    let curr_dirr = env::current_dir().expect("Can't read directory");
+    if args.is_empty() {
+        println!("\nNo Directory is specified!");
+        println!("Usage: fog <dir> (Use '.' for current directory)");
+        println!("Example:\nfog .");
+        return;
+    }
 
-    let dir;
+    let dir = PathBuf::from(args.first().unwrap());
 
-    //Checking if the user has provided a path or not.
-    if enb.len() > 1 {
-        if Path::new(&enb[1]).is_dir() {
-            dir = Path::new(&enb[1]);
-        } else if enb[1] == "."{
-            dir = &curr_dirr;
-        } else {
-            println!("Invalid Path");
-            println!("Usage: file_organizer [path] (. for current directory)");
-            return;
+    println!("{:?}", dir);
+    if !dir.exists() {
+        println!("The Given Directory doesn't exists, please check again!");
+        return;
+    }
+
+    if let Err(err) = organize_directory(dir) {
+        match err.kind() {
+            io::ErrorKind::PermissionDenied => {
+                println!("Insufficient Permission, Try using a elevated Shell")
+            }
+            io::ErrorKind::Interrupted => println!(
+                "Files in the directory is in use by a active program, try again and closing them"
+            ),
+            _ => println!("Idk Got an error, {}", err),
         }
     } else {
-        print!("Do you want to Organise the current Directory? (y/n): ");
-        std::io::stdout().flush().unwrap();
-
-        let mut input = String::new();
-        std::io::stdin().read_line(&mut input).expect("Can't read input");
-
-        if input.trim() == "y" || input.trim() == "Y" {
-            dir = &curr_dirr;
-        } else {
-            println!("Mission Aborted!! :)");
-            println!("Usage: file_organizer [path] (. for current directory)");
-            return;
-        }
+        println!("Directory Organized Successfully!");
     }
-
-    //Filter files from the directory.
-    let files = dir
-        .read_dir()
-        .expect("Cant' take files")
-        .filter_map(|entry| {
-            //Filtering out the files using is_file() method.
-            let path = entry.unwrap().path();
-            if path.is_file() {
-                Some(path)
-            } else {
-                None
-            }
-        });
-
-    //Looping thru the files and moving them to their respective folders.
-    for file in files {
-        if let Some(extension) = file.extension() {
-
-            //Getting the extension and creating the folder name.
-            let file_extension = extension.to_str().unwrap();
-            let folder_name = dir.join(file_extension);
-
-            //Creating the folder if it doesn't exist.
-            if !folder_name.exists() {
-                std::fs::create_dir(&folder_name).expect("Can't create folder");
-            }
-
-            //Renaming the file to move it to the folder.
-            let new_path = folder_name.join(file.file_name().unwrap());
-            fs::rename(&file, &new_path).expect("Can't rename file");
-        }
-    }
-    
-    println!("Files Organized!!");
-    std::io::stdout().flush().unwrap();
 }
